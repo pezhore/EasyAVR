@@ -22,13 +22,10 @@ from easykeymap.helper import make_matrix_config
 
 description = "JD40 MkII (Carpe Keyboards)"
 unique_id = "JD40_002"
-cfg_name = "jd40"
+cfg_name = "jd40v2"
 
 teensy = False
 hw_boot_key = True
-
-display_height = int(4*4)
-display_width = int(12*4)
 
 num_rows = 4
 num_cols = 12
@@ -108,13 +105,11 @@ keyboard_definition = [
     [((4, 4), (3, 0), ['HID_KEYBOARD_SC_LEFT_CONTROL', 'HID_KEYBOARD_SC_LEFT_CONTROL']),
      ((4, 4), (3, 1), ['HID_KEYBOARD_SC_LEFT_GUI', 'HID_KEYBOARD_SC_LEFT_GUI']),
      ((4, 4), (3, 2), ['HID_KEYBOARD_SC_LEFT_ALT', 'HID_KEYBOARD_SC_LEFT_ALT']),
-     ((5, 4), (3, 3), ['SCANCODE_FN', 'SCANCODE_FN']),
+     ((5, 4), (3, 3), ['SCANCODE_FN1', 'SCANCODE_FN1']),
      ((7, 4), (3, 4), ['HID_KEYBOARD_SC_BACKSPACE', 'HID_KEYBOARD_SC_BACKSPACE']),
      ((7, 4), (3, 6), ['HID_KEYBOARD_SC_SPACE', 'HID_KEYBOARD_SC_SPACE']),
-     ((5, 4), (3, 7), ['SCANCODE_FN', 'SCANCODE_FN']),
+     ((5, 4), (3, 7), ['SCANCODE_FN1', 'SCANCODE_FN1']),
      ((4, 4), (3, 8), ['HID_KEYBOARD_SC_LEFT_ARROW', 'HID_KEYBOARD_SC_HOME']),
      ((4, 4), (3, 9), ['HID_KEYBOARD_SC_DOWN_ARROW', 'HID_KEYBOARD_SC_PAGE_DOWN']),
      ((4, 4), (3, 10), ['HID_KEYBOARD_SC_RIGHT_ARROW', 'HID_KEYBOARD_SC_END'])]
 ]
-
-alt_layouts = {}

@@ -27,9 +27,6 @@ cfg_name = "jd45"
 teensy = False
 hw_boot_key = True
 
-display_height = int(4*4)
-display_width = int(13*4)
-
 num_rows = 4
 num_cols = 13
 
@@ -109,7 +106,7 @@ keyboard_definition = [
      ((5, 4), (2, 11), ['HID_KEYBOARD_SC_RIGHT_SHIFT', 'HID_KEYBOARD_SC_RIGHT_SHIFT', 'HID_KEYBOARD_SC_RIGHT_SHIFT'])],
 
     [((5, 4), (3, 0), ['HID_KEYBOARD_SC_LEFT_CONTROL', 'HID_KEYBOARD_SC_LEFT_CONTROL', 'HID_KEYBOARD_SC_LEFT_CONTROL']),
-     ((4, 4), (3, 1), ['SCANCODE_FN', 'SCANCODE_FN', 'SCANCODE_FN']),
+     ((4, 4), (3, 1), ['SCANCODE_FN1', 'SCANCODE_FN1', 'SCANCODE_FN1']),
      ((5, 4), (3, 2), ['HID_KEYBOARD_SC_LEFT_GUI', 'HID_KEYBOARD_SC_LEFT_GUI', 'HID_KEYBOARD_SC_LEFT_GUI']),
      ((5, 4), (3, 3), ['HID_KEYBOARD_SC_LEFT_ALT', 'HID_KEYBOARD_SC_LEFT_ALT', 'HID_KEYBOARD_SC_LEFT_ALT']),
      ((7, 4), (3, 4), ['HID_KEYBOARD_SC_BACKSPACE', 'HID_KEYBOARD_SC_BACKSPACE', 'HID_KEYBOARD_SC_BACKSPACE']),
@@ -119,5 +116,3 @@ keyboard_definition = [
      ((4, 4), (3, 10), ['SCANCODE_FN2', 'SCANCODE_FN2', 'SCANCODE_FN2']),
      ((5, 4), (3, 11), ['HID_KEYBOARD_SC_RIGHT_CONTROL', 'HID_KEYBOARD_SC_RIGHT_CONTROL', 'HID_KEYBOARD_SC_RIGHT_CONTROL'])]
 ]
-
-alt_layouts = {}

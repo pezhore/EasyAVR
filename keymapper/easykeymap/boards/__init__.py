@@ -1,5 +1,5 @@
 # Easy AVR USB Keyboard Firmware Keymapper
-# Copyright (C) 2013-2016 David Howland
+# Copyright (C) 2013-2017 David Howland
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,44 +14,4 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = [
-'atomic',
-'atreus',
-'atreus62',
-'epsilon',
-'filco',
-'filco87',
-'filco87v2',
-'filco104',
-'gh122',
-'gh36',
-'gh60',
-'gh60_satan',
-'ghpad',
-'jd40',
-'jd40v2',
-'jd45',
-'jd45v2',
-'kc60',
-'kmac',
-'minorca',
-'monarch',
-'octagon',
-'orion',
-'phantom',
-'planck',
-'qfr',
-'qfrv2',
-'qfxt',
-'rosewill',
-'sentraq',
-'sigma',
-'sixkeyboard',
-'sixshooter',
-'smallfry',
-'tada68',
-'tau',
-'techcard',
-'threekey',
-'zeta'
-]
+"""The boards package contains the config files for supported keyboards."""

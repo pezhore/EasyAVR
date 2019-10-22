@@ -27,9 +27,6 @@ cfg_name = "atreus62"
 teensy = False
 hw_boot_key = True
 
-display_height = int(5*4)
-display_width = int(13*4)
-
 num_rows = 5
 num_cols = 13
 
@@ -126,7 +123,7 @@ keyboard_definition = [
      ((4, 4), (4, 1), 'HID_KEYBOARD_SC_LEFT_GUI'),
      ((4, 4), (4, 2), 'HID_KEYBOARD_SC_LEFT_ALT'),
      ((4, 4), (4, 3), 'HID_KEYBOARD_SC_GRAVE_ACCENT_AND_TILDE'),
-     ((4, 4), (4, 4), 'SCANCODE_FN'),
+     ((4, 4), (4, 4), 'SCANCODE_FN1'),
      ((4, 4), (4, 5), 'HID_KEYBOARD_SC_BACKSPACE'),
      ((4, 4), (3, 6), 'HID_KEYBOARD_SC_DELETE'),
      ((4, 4), (4, 6), 'HID_KEYBOARD_SC_ENTER'),
@@ -137,6 +134,3 @@ keyboard_definition = [
      ((4, 4), (4, 11), 'HID_KEYBOARD_SC_ENTER'),
      ((4, 4), (4, 12), 'HID_KEYBOARD_SC_RIGHT_GUI')]
 ]
-
-# Just leave this here as-is.
-alt_layouts = {}

@@ -27,9 +27,6 @@ cfg_name = "jd45"
 teensy = True
 hw_boot_key = False
 
-display_height = int(4*4)
-display_width = int(13*4)
-
 num_rows = 4
 num_cols = 12
 
@@ -108,7 +105,7 @@ keyboard_definition = [
      ((5, 4), (2, 11), 'HID_KEYBOARD_SC_RIGHT_SHIFT')],
 
     [((5, 4), (3, 0), 'HID_KEYBOARD_SC_LEFT_CONTROL'),
-     ((4, 4), (3, 1), 'SCANCODE_FN'),
+     ((4, 4), (3, 1), 'SCANCODE_FN1'),
      ((5, 4), (3, 2), 'HID_KEYBOARD_SC_LEFT_GUI'),
      ((5, 4), (3, 3), 'HID_KEYBOARD_SC_LEFT_ALT'),
      ((7, 4), (3, 4), 'HID_KEYBOARD_SC_SPACE'),
@@ -118,5 +115,3 @@ keyboard_definition = [
      ((4, 4), (3, 9), 'SCANCODE_FN2'),
      ((5, 4), (3, 10), 'HID_KEYBOARD_SC_RIGHT_CONTROL')]
 ]
-
-alt_layouts = {}

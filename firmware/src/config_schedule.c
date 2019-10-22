@@ -23,7 +23,6 @@
 #include "USB.h"
 #include "matrix.h"
 #include "mouse.h"
-#include "password.h"
 #include "led.h"
 #include "autokey.h"
 #include "scheduler.h"
@@ -33,20 +32,21 @@
 
 /*	1x4
 	+----------------+
-	| USB_cycle      |
+	| led_cycle      |
 	+----------------+
 	| matrix_scan    |
 	+----------------+
 	| autokey_cycle  |
 	+----------------+
-	| led_cycle      |
+	|                |
 	+----------------+ */
+
 void (* const g_sched_list[NUMBER_OF_SCHEDULE_SLOTS][NUMBER_OF_ITEMS_PER_SLOT])(void) PROGMEM = {
 	{
-		&USB_cycle,
+		&led_cycle,
 		&matrix_scan,
 		&autokey_cycle,
-		&led_cycle
+		NULL
 	}
 };
 
@@ -56,39 +56,39 @@ void (* const g_sched_list[NUMBER_OF_SCHEDULE_SLOTS][NUMBER_OF_ITEMS_PER_SLOT])(
 
 /*	4x4
 	+----------------+----------------+----------------+----------------+
-	| USB_cycle      | matrix_scan_2  | USB_cycle      | matrix_scan_4  |
+	| led_cycle      | led_cycle      | led_cycle      | led_cycle      |
 	+----------------+----------------+----------------+----------------+
-	| matrix_scan_1  | password_cycle | matrix_scan_3  | autokey_cycle  |
+	| matrix_scan_1  | matrix_scan_2  | matrix_scan_3  | matrix_scan_4  |
 	+----------------+----------------+----------------+----------------+
-	| led_cycle      | update_mouse   | led_cycle      | console_main   |
+	| update_mouse   | autokey_cycle  | console_main   |                |
 	+----------------+----------------+----------------+----------------+
-	|                | led_cycle      |                | led_cycle      |
+	|                |                |                |                |
 	+----------------+----------------+----------------+----------------+ */
 
 void (* const g_sched_list[NUMBER_OF_SCHEDULE_SLOTS][NUMBER_OF_ITEMS_PER_SLOT])(void) PROGMEM = {
 	{
-		&USB_cycle,
+		&led_cycle,
 		&matrix_scan_first_quarter,
-		&led_cycle,
-		NULL
-	},
-	{
-		&matrix_scan_second_quarter,
-		&password_cycle,
 		&update_mouse,
-		&led_cycle
-	},
-	{
-		&USB_cycle,
-		&matrix_scan_third_quarter,
-		&led_cycle,
 		NULL
 	},
 	{
-		&matrix_scan_fourth_quarter,
+		&led_cycle,
+		&matrix_scan_second_quarter,
 		&autokey_cycle,
+		NULL
+	},
+	{
+		&led_cycle,
+		&matrix_scan_third_quarter,
 		&console_main,
-		&led_cycle
+		NULL
+	},
+	{
+		&led_cycle,
+		&matrix_scan_fourth_quarter,
+		NULL,
+		NULL
 	}
 };
 
@@ -96,31 +96,31 @@ void (* const g_sched_list[NUMBER_OF_SCHEDULE_SLOTS][NUMBER_OF_ITEMS_PER_SLOT])(
 
 /*	2x5
 	+----------------+----------------+
-	| USB_cycle      | USB_cycle      |
+	| led_cycle      | led_cycle      |
 	+----------------+----------------+
 	| matrix_scan_1  | matrix_scan_2  |
 	+----------------+----------------+
-	| password_cycle | autokey_cycle  |
+	| update_mouse   | autokey_cycle  |
 	+----------------+----------------+
-	| update_mouse   | console_main   |
+	|                | console_main   |
 	+----------------+----------------+
-	| led_cycle      | led_cycle      |
+	|                |                |
 	+----------------+----------------+ */
 
 void (* const g_sched_list[NUMBER_OF_SCHEDULE_SLOTS][NUMBER_OF_ITEMS_PER_SLOT])(void) PROGMEM = {
 	{
-		&USB_cycle,
+		&led_cycle,
 		&matrix_scan_first_half,
-		&password_cycle,
 		&update_mouse,
-		&led_cycle
+		NULL,
+		NULL
 	},
 	{
-		&USB_cycle,
+		&led_cycle,
 		&matrix_scan_second_half,
 		&autokey_cycle,
 		&console_main,
-		&led_cycle
+		NULL
 	}
 };
 

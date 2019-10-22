@@ -27,9 +27,6 @@ cfg_name = "atomic"
 teensy = False
 hw_boot_key = False
 
-display_height = int(5*4)
-display_width = int(15*4)
-
 num_rows = 5
 num_cols = 15
 
@@ -137,7 +134,7 @@ keyboard_definition = [
      ((4, 4), (4, 1), 'HID_KEYBOARD_SC_LEFT_CONTROL'),
      ((4, 4), (4, 2), 'HID_KEYBOARD_SC_LEFT_GUI'),
      ((4, 4), (4, 3), 'HID_KEYBOARD_SC_LEFT_ALT'),
-     ((4, 4), (4, 4), 'SCANCODE_FN'),
+     ((4, 4), (4, 4), 'SCANCODE_FN1'),
      ((4, 4), (4, 5), 'HID_KEYBOARD_SC_SPACE'),
      ((4, 4), (4, 6), 'HID_KEYBOARD_SC_SPACE'),
      ((4, 4), (4, 7), 'SCANCODE_FN2'),
@@ -149,5 +146,3 @@ keyboard_definition = [
      ((4, 4), (4, 13), 'HID_KEYBOARD_SC_DOWN_ARROW'),
      ((4, 4), (4, 14), 'HID_KEYBOARD_SC_RIGHT_ARROW')]
 ]
-
-alt_layouts = {}

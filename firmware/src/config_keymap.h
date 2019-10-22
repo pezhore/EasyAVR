@@ -123,13 +123,11 @@
 #define SCANCODE_BL_DIMMER 0xC1
 #define SCANCODE_BL_MODE 0xC2
 #define SCANCODE_BL_ENABLE 0xC3
-#define SCANCODE_PASSWORD1 0xC4
-#define SCANCODE_PASSWORD2 0xC5
-#define SCANCODE_PASSWORD3 0xC6
-#define SCANCODE_PASSWORD4 0xC7
 #define SCANCODE_KEYLOCK 0xC8
 #define SCANCODE_WINLOCK 0xC9
 #define SCANCODE_ESCGRAVE 0xCA
+#define SCANCODE_MRAM_RECORD 0xCC
+#define SCANCODE_MRAM_PLAY 0xCD
 #define SCANCODE_BOOT 0xCE
 #define SCANCODE_CONFIG 0xCF
 
@@ -147,12 +145,12 @@
 #define SCANCODE_M12 0xDB
 #define SCANCODE_M13 0xDC
 #define SCANCODE_M14 0xDD
-#define SCANCODE_MRAM_RECORD 0xDE
-#define SCANCODE_MRAM_PLAY 0xDF
+#define SCANCODE_M15 0xDE
+#define SCANCODE_M16 0xDF
 
 /* Must be larger than the 0xE0 range */
-#define SCANCODE_FN_ORIGIN 0xF0
-#define SCANCODE_FN 0xF1
+#define SCANCODE_FN0 0xF0
+#define SCANCODE_FN1 0xF1
 #define SCANCODE_FN2 0xF2
 #define SCANCODE_FN3 0xF3
 #define SCANCODE_FN4 0xF4
@@ -180,7 +178,7 @@
 #define MACRO_RAM_SIZE (160)
 #endif /* Larger ATmega Devices */
 
-#define NUMBER_OF_MACROS (14)
+#define NUMBER_OF_MACROS (16)
 
 /* Action word definition
 Gui

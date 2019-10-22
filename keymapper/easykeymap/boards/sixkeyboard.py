@@ -28,13 +28,10 @@ cfg_name = "sixkeyboard"
 teensy = False
 hw_boot_key = True
 
-display_height = int(2*4)
-display_width = int(3*4)
-
 num_rows = 1
 num_cols = 6
 
-strobe_cols = True
+strobe_cols = False
 strobe_low = True
 
 matrix_hardware, matrix_strobe, matrix_sense = make_matrix_config(
@@ -46,8 +43,8 @@ matrix_hardware, matrix_strobe, matrix_sense = make_matrix_config(
 )
 
 num_leds = 7
-num_ind = 6
-num_bl_enab = 3
+num_ind = 7
+num_bl_enab = 2
 
 led_definition = [
     ('1', 'Unassigned'),
@@ -56,26 +53,25 @@ led_definition = [
     ('4', 'Unassigned'),
     ('5', 'Unassigned'),
     ('6', 'Unassigned'),
-    ('Underglow?', 'Unassigned')
+    ('Underside', 'Unassigned')
 ]
 
 led_hardware = [
 #       Port    Pin    Direction
-    ( REF_PORTC, 6, LED_DRIVER_PULLUP ),
-    ( REF_PORTB, 6, LED_DRIVER_PULLUP ),
-    ( REF_PORTB, 4, LED_DRIVER_PULLUP ),
-    ( REF_PORTD, 5, LED_DRIVER_PULLUP ),
-    ( REF_PORTD, 2, LED_DRIVER_PULLUP ),
-    ( REF_PORTD, 3, LED_DRIVER_PULLUP ),
-    ( REF_PORTC, 4, LED_DRIVER_PULLUP )
+    ( REF_PORTC, 6, LED_DRIVER_PULLDOWN ),
+    ( REF_PORTB, 6, LED_DRIVER_PULLDOWN ),
+    ( REF_PORTB, 4, LED_DRIVER_PULLDOWN ),
+    ( REF_PORTD, 5, LED_DRIVER_PULLDOWN ),
+    ( REF_PORTD, 2, LED_DRIVER_PULLDOWN ),
+    ( REF_PORTD, 3, LED_DRIVER_PULLDOWN ),
+    ( REF_PORTC, 4, LED_DRIVER_PULLDOWN )
 ]
 
-backlighting = True
+backlighting = False
 
 bl_modes = [
-    ( 0, 0, 0, 0, 0, 0 ),
-    ( 1, 1, 1, 1, 1, 1 ),
-    ( 0, 1, 0, 1, 1, 1 )
+    ( 0, 0, 0, 0, 0, 0, 0 ),
+    ( 1, 1, 1, 1, 1, 1, 1 )
 ]
 
 KMAC_key = None
@@ -89,5 +85,3 @@ keyboard_definition = [
      ((4, 4), (0, 4), 'SCANCODE_PLAY_PAUSE'),
      ((4, 4), (0, 5), 'SCANCODE_NEXT_TRACK')],
 ]
-
-alt_layouts = {}

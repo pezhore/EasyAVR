@@ -28,7 +28,6 @@
 #include "mouse.h"
 #include "led.h"
 #include "nvm.h"
-#include "password.h"
 #include "keymap.h"
 
 const mod_map_t PROGMEM MODIFIER_MAP[8] = {
@@ -99,7 +98,11 @@ uint8_t g_locked_layer;
 uint8_t g_layer_select;
 uint8_t g_modifier_state;
 uint8_t g_report_buffer[HID_ROLLOVER_SIZE+1];
-uint8_t g_nkro_field[REAL_NKRO_SIZE];
+uint8_t g_nkro_field[NKRO_ARRAY_LENGTH];
+uint8_t g_modifier_service;
+uint8_t g_alphanum_service;
+uint8_t g_media_service;
+uint8_t g_power_service;
 #ifdef KEYMAP_MEMORY_SAVE
 uint8_t g_matrixlayer[NUMBER_OF_ROWS][NUMBER_OF_COLS];
 #else
@@ -142,6 +145,8 @@ void enqueue_key(const uint8_t code)
 	
 	g_nkro_field[pos] |= (1 << off);
 	
+	g_alphanum_service = 1;
+	
 	for (i=0; i<g_buffer_length; i++)
 	{
 		if (g_report_buffer[i] == code)
@@ -168,6 +173,8 @@ void delete_key(const uint8_t code)
 	
 	g_nkro_field[pos] &= ~(1 << off);
 	
+	g_alphanum_service = 1;
+	
 	for (i=0; i<g_buffer_length; i++)
 	{
 		if (g_report_buffer[i] == code)
@@ -193,6 +200,8 @@ void toggle_key(const uint8_t code)
 	const uint8_t off = (code % 8);
 	
 	g_nkro_field[pos] ^= (1 << off);
+	
+	g_alphanum_service = 1;
 	
 	for (i=0; i<g_buffer_length; i++)
 	{
@@ -280,11 +289,13 @@ void inline set_modifier(const uint8_t code)
 	g_modifier_state |= get_modfier_mask(code);
 	if (g_winlock_flag)
 		g_modifier_state &= 0x77;
+	g_modifier_service = 1;
 }
 
 void inline unset_modifier(const uint8_t code)
 {
 	g_modifier_state &= ~(get_modfier_mask(code));
+	g_modifier_service = 1;
 }
 
 void inline toggle_modifier(const uint8_t code)
@@ -292,6 +303,7 @@ void inline toggle_modifier(const uint8_t code)
 	g_modifier_state ^= get_modfier_mask(code);
 	if (g_winlock_flag)
 		g_modifier_state &= 0x77;
+	g_modifier_service = 1;
 }
 
 uint8_t inline is_mod_set(const uint8_t code)
@@ -299,30 +311,49 @@ uint8_t inline is_mod_set(const uint8_t code)
 	return ((g_modifier_state & get_modfier_mask(code)) != 0);
 }
 
-void inline set_media(const uint8_t code)
+void set_media(const uint8_t code)
 {
 	const uint8_t i = (code - SCANCODE_NEXT_TRACK);
 	if (!g_media_key)
 		g_media_key = pgm_read_word(&MEDIA_MAP[i]);
+	g_media_service = 1;
 }
 
-void inline unset_media(const uint8_t code)
+void unset_media(const uint8_t code)
 {
 	const uint8_t i = (code - SCANCODE_NEXT_TRACK);
 	if (g_media_key == pgm_read_word(&MEDIA_MAP[i]))
 		g_media_key = 0;
+	g_media_service = 1;
+}
+
+void set_power(const uint8_t code)
+{
+	const uint8_t n = (code - SCANCODE_POWER);
+	/* Assume power keys never coincide */
+	g_powermgmt_field = (1 << n);
+	g_power_service = 1;
+}
+
+void unset_power(const uint8_t code)
+{
+	/* Assume power keys never coincide */
+	g_powermgmt_field = 0;
+	g_power_service = 1;
 }
 
 void inline set_mousebutton(const uint8_t code)
 {
 	const uint8_t i = (code - SCANCODE_MOUSE1);
 	g_mousebutton_state |= pgm_read_byte(&MOUSEBUTTON_MAP[i].mask);
+	g_mouse_service = 1;
 }
 
 void inline unset_mousebutton(const uint8_t code)
 {
 	const uint8_t i = (code - SCANCODE_MOUSE1);
 	g_mousebutton_state &= ~(pgm_read_byte(&MOUSEBUTTON_MAP[i].mask));
+	g_mouse_service = 1;
 }
 
 void init_keymap(void)
@@ -390,27 +421,6 @@ void inline toggle_macro_record(void)
 		led_host_off(LED_RECORDING);
 	}
 }
-
-void inline start_password_record(const uint8_t code)
-{
-	g_recording_macro = 1;
-	g_ram_macro_ptr = 0;
-	g_keylock_flag = 1;
-	g_pw_select = (code - SCANCODE_PASSWORD1);
-	led_host_on(LED_RECORDING);
-}
-
-void inline check_finish_password_record(const uint8_t code)
-{
-	if ((code == HID_KEYBOARD_SC_ENTER) || (code == HID_KEYBOARD_SC_TAB))
-	{
-		g_keylock_flag = 0;
-		g_recording_macro = 0;
-		g_ram_macro_length = g_ram_macro_ptr - 1;
-		g_pw_phase = PHASE_INIT;
-		led_host_off(LED_RECORDING);
-	}
-}
 #endif /* MACRO_RAM_SIZE */
 
 void play_macro(const uint8_t code)
@@ -459,12 +469,20 @@ void led_fn_deactivate(const uint8_t bit)
 
 void fn_down(const uint8_t code, const uint8_t action)
 {
-	enqueue_fn(code);
+	if (g_layer_select != 0)
+	{
+		led_host_off((g_layer_select + (LED_FN1_ACTIVE-1)));
+	}
+	g_layer_select = (code - SCANCODE_FN0);
+	enqueue_fn(g_layer_select);
+	if (g_layer_select != 0)
+	{
+		led_host_on((g_layer_select + (LED_FN1_ACTIVE-1)));
+	}
 	if (g_layer_select != g_default_layer)
-		led_host_off((g_layer_select + (LED_FN_ACTIVE-1)));
-	g_layer_select = (code - SCANCODE_FN_ORIGIN);
-	led_host_on((g_layer_select + (LED_FN_ACTIVE-1)));
-	led_host_on(LED_ANY_ACTIVE);
+	{
+		led_host_on(LED_ANY_ACTIVE);
+	}
 	if ((action & ACTION_TOGGLE) && (g_locked_layer != g_layer_select))
 	{
 		g_locked_layer = g_layer_select;
@@ -478,8 +496,13 @@ void fn_down(const uint8_t code, const uint8_t action)
 
 void fn_up(const uint8_t code, const uint8_t action, const uint8_t tapkey, const uint8_t tap)
 {
-	delete_fn(code);
-	if (tap && (g_layer_select == (code - SCANCODE_FN_ORIGIN)))
+	const uint8_t layerid = (code - SCANCODE_FN0);
+	
+	if (g_layer_select != 0)
+	{
+		led_host_off((g_layer_select + (LED_FN1_ACTIVE-1)));
+	}
+	if (tap && (g_layer_select == layerid))
 	{
 		if ((g_double_tap_repeat) && (action & ACTION_LOCKABLE))
 		{
@@ -490,19 +513,23 @@ void fn_up(const uint8_t code, const uint8_t action, const uint8_t tapkey, const
 			send_tapkey(tapkey);
 		}
 	}
-	led_host_off((g_layer_select + (LED_FN_ACTIVE-1)));
+	delete_fn(layerid);
 	if (g_fn_buffer_length == 0)
 	{
 		g_layer_select = g_locked_layer;
 	}
 	else
 	{
-		g_layer_select = (g_fn_buffer[g_fn_buffer_length-1] - SCANCODE_FN_ORIGIN);
+		g_layer_select = g_fn_buffer[g_fn_buffer_length-1];
 	}
-	if (g_layer_select != g_default_layer)
-		led_host_on((g_layer_select + (LED_FN_ACTIVE-1)));
-	else
+	if (g_layer_select != 0)
+	{
+		led_host_on((g_layer_select + (LED_FN1_ACTIVE-1)));
+	}
+	if (g_layer_select == g_default_layer)
+	{
 		led_host_off(LED_ANY_ACTIVE);
+	}
 }
 
 void mod_down(const uint8_t code, const uint8_t action)
@@ -592,7 +619,9 @@ void handle_code_actuate(const uint8_t code, const uint8_t action, const uint8_t
 	
 	if (modaction)
 	{
+		// Autokey macros are assumed to be mutually exclusive with keypresses
 		g_autokey_modifier = modaction;
+		g_modifier_service = 1;
 	}
 	
 	switch(code)
@@ -742,17 +771,12 @@ void handle_code_actuate(const uint8_t code, const uint8_t action, const uint8_t
 		led_dimmer();
 		break;
 #endif /* MAX_NUMBER_OF_BACKLIGHTS */
-#ifdef MACRO_RAM_SIZE
-	case SCANCODE_PASSWORD1:
-	case SCANCODE_PASSWORD2:
-	case SCANCODE_PASSWORD3:
-	case SCANCODE_PASSWORD4:
-		if (!g_recording_macro)
-			start_password_record(code);
-		break;
-#endif /* MACRO_RAM_SIZE */
 	case SCANCODE_KEYLOCK:
 		g_keylock_flag ^= 1;
+		if (g_keylock_flag == 0)
+			led_host_off(LED_KB_LOCK);
+		else
+			led_host_on(LED_KB_LOCK);
 		break;
 	case SCANCODE_WINLOCK:
 		g_winlock_flag ^= 1;
@@ -766,8 +790,7 @@ void handle_code_actuate(const uint8_t code, const uint8_t action, const uint8_t
 	case SCANCODE_POWER:
 	case SCANCODE_SLEEP:
 	case SCANCODE_WAKE:
-		/* Assume power keys never coincide */
-		g_powermgmt_field = (1 << (code - SCANCODE_POWER));
+		set_power(code);
 		break;
 	case SCANCODE_BOOT:
 		g_reset_requested = RESET_TO_BOOT;
@@ -839,6 +862,8 @@ void handle_code_actuate(const uint8_t code, const uint8_t action, const uint8_t
 	case SCANCODE_M12:
 	case SCANCODE_M13:
 	case SCANCODE_M14:
+	case SCANCODE_M15:
+	case SCANCODE_M16:
 		play_macro(code);
 		break;
 #ifdef MACRO_RAM_SIZE
@@ -860,7 +885,8 @@ void handle_code_actuate(const uint8_t code, const uint8_t action, const uint8_t
 	case HID_KEYBOARD_SC_RIGHT_GUI:
 		mod_down(code, action);
 		break;
-	case SCANCODE_FN:
+	case SCANCODE_FN0:
+	case SCANCODE_FN1:
 	case SCANCODE_FN2:
 	case SCANCODE_FN3:
 	case SCANCODE_FN4:
@@ -886,6 +912,7 @@ void handle_code_deactuate(const uint8_t code, const uint8_t action, const uint8
 	if (modaction)
 	{
 		g_autokey_modifier = 0;
+		g_modifier_service = 1;
 	}
 	
 	switch(code)
@@ -1002,10 +1029,6 @@ void handle_code_deactuate(const uint8_t code, const uint8_t action, const uint8
 	case HID_KEYBOARD_SC_F22:
 	case HID_KEYBOARD_SC_F23:
 	case HID_KEYBOARD_SC_F24:
-#ifdef MACRO_RAM_SIZE
-		if (g_recording_macro && g_keylock_flag)
-			check_finish_password_record(code);
-#endif /* MACRO_RAM_SIZE */
 		alpha_up(code, action, tapkey, tap);
 		break;
 	case HID_KEYBOARD_SC_LOCKING_CAPS_LOCK:
@@ -1023,19 +1046,20 @@ void handle_code_deactuate(const uint8_t code, const uint8_t action, const uint8
 	case SCANCODE_BL_DIMMER:
 	case SCANCODE_BL_MODE:
 	case SCANCODE_BL_ENABLE:
-	case SCANCODE_PASSWORD1:
-	case SCANCODE_PASSWORD2:
-	case SCANCODE_PASSWORD3:
-	case SCANCODE_PASSWORD4:
 	case SCANCODE_KEYLOCK:
 	case SCANCODE_WINLOCK:
+		break;
 	case SCANCODE_ESCGRAVE:
+#ifdef KEYMAP_MEMORY_SAVE
+		/* If using keymap memory save, we don't know which was pressed. Just pull 'em both. */
+		alpha_up(HID_KEYBOARD_SC_ESCAPE, action, tapkey, tap);
+		alpha_up(HID_KEYBOARD_SC_GRAVE_ACCENT_AND_TILDE, action, tapkey, tap);
+#endif /* KEYMAP_MEMORY_SAVE */
 		break;
 	case SCANCODE_POWER:
 	case SCANCODE_SLEEP:
 	case SCANCODE_WAKE:
-		/* Assume power keys never coincide */
-		g_powermgmt_field = 0;
+		unset_power(code);
 		break;
 	case SCANCODE_BOOT:
 	case SCANCODE_CONFIG:
@@ -1100,6 +1124,8 @@ void handle_code_deactuate(const uint8_t code, const uint8_t action, const uint8
 	case SCANCODE_M12:
 	case SCANCODE_M13:
 	case SCANCODE_M14:
+	case SCANCODE_M15:
+	case SCANCODE_M16:
 	case SCANCODE_MRAM_RECORD:
 	case SCANCODE_MRAM_PLAY:
 		break;
@@ -1117,7 +1143,8 @@ void handle_code_deactuate(const uint8_t code, const uint8_t action, const uint8
 #endif /* MACRO_RAM_SIZE */
 		mod_up(code, action, tapkey, tap);
 		break;
-	case SCANCODE_FN:
+	case SCANCODE_FN0:
+	case SCANCODE_FN1:
 	case SCANCODE_FN2:
 	case SCANCODE_FN3:
 	case SCANCODE_FN4:
@@ -1257,17 +1284,27 @@ void keymap_interrupt(const uint8_t row, const uint8_t col)
 
 void get_keyboard_report(uint8_t * const buffer)
 {
-	uint8_t i;
-	
 	if (g_keylock_flag)
 		return;
 	
-	for (i=0; i<HID_ROLLOVER_SIZE; i++)
+	/* Skip the for loop, HID_ROLLOVER_SIZE is always 6 */
+	if (g_rollover_error)
 	{
-		if (g_rollover_error)
-			buffer[i] = HID_KEYBOARD_SC_ERROR_ROLLOVER;
-		else
-			buffer[i] = g_report_buffer[i];
+		buffer[0] = HID_KEYBOARD_SC_ERROR_ROLLOVER;
+		buffer[1] = HID_KEYBOARD_SC_ERROR_ROLLOVER;
+		buffer[2] = HID_KEYBOARD_SC_ERROR_ROLLOVER;
+		buffer[3] = HID_KEYBOARD_SC_ERROR_ROLLOVER;
+		buffer[4] = HID_KEYBOARD_SC_ERROR_ROLLOVER;
+		buffer[5] = HID_KEYBOARD_SC_ERROR_ROLLOVER;
+	}
+	else
+	{
+		buffer[0] = g_report_buffer[0];
+		buffer[1] = g_report_buffer[1];
+		buffer[2] = g_report_buffer[2];
+		buffer[3] = g_report_buffer[3];
+		buffer[4] = g_report_buffer[4];
+		buffer[5] = g_report_buffer[5];
 	}
 }
 
@@ -1278,7 +1315,7 @@ void get_nkro_report(uint8_t * const buffer)
 	if (g_keylock_flag)
 		return;
 	
-	for (i=0; i<REAL_NKRO_SIZE; i++)
+	for (i=0; i<NKRO_ARRAY_LENGTH; i++)
 	{
 		buffer[i] = g_nkro_field[i];
 	}

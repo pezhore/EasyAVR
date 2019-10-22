@@ -43,7 +43,7 @@ typedef enum {
 	LED_COMPOSE,
 	LED_KANA,
 	LED_WIN_LOCK,
-	LED_FN_ACTIVE,
+	LED_FN1_ACTIVE,
 	LED_FN2_ACTIVE,
 	LED_FN3_ACTIVE,
 	LED_FN4_ACTIVE,
@@ -58,6 +58,7 @@ typedef enum {
 	LED_USB_ERROR,
 	LED_USB_SUSPEND,
 	LED_USB_NORMAL,
+	LED_KB_LOCK,
 	NUMBER_OF_LED_FUNCTIONS
 } led_function_t;
 
@@ -80,15 +81,9 @@ extern const uint8_t PROGMEM NUMBER_OF_INDICATORS;
 #if (defined(__AVR_ATmega32U4__) && !defined(BOARD_SIZE_COSTAR)) || defined(__AVR_AT90USB1286__)
 #define MAX_NUMBER_OF_BACKLIGHTS (8)
 #define MAX_BACKLIGHT_ENABLES (16)
-#define STR_MAX_BACKLIGHT_ENABLES "16"
 extern const uint8_t PROGMEM NUMBER_OF_BACKLIGHTS;
 extern const uint8_t PROGMEM NUMBER_OF_BACKLIGHT_ENABLES;
 #endif /* Bigger devices and smaller matrices */
-
-#ifndef MAX_BACKLIGHT_ENABLES
-#define MAX_BACKLIGHT_ENABLES (1)
-#define STR_MAX_BACKLIGHT_ENABLES "1"
-#endif /* MAX_BACKLIGHT_ENABLES */
 
 typedef enum {
 	LED_DRIVER_PULLUP,

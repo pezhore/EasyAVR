@@ -24,7 +24,6 @@
 #include "keymap.h"
 #include "autokey.h"
 
-uint8_t g_keyboard_service;
 uint16_t const * g_macro_waiting;
 uint16_t * g_ram_macro_waiting;
 char const * g_autotext_waiting;
@@ -49,12 +48,13 @@ void init_autokey(void)
 void autokey_send(void)
 {
 	union16_t code;
+	const uint8_t keyboard_service = (g_alphanum_service | g_modifier_service | g_media_service | g_power_service);
 	
 	/* Check if we still have work to do */
 	if (g_send_buffer_length != 0)
 	{
 		/* Wait for the last keystroke to get sent */
-		if (!g_keyboard_service)
+		if (!keyboard_service)
 		{
 			/* Check for a pause action */
 			if (g_send_wait == 0)
@@ -68,21 +68,51 @@ void autokey_send(void)
 						g_send_buffer_pos = g_send_buffer_length = 0;
 					} else {
 						/* The modifiers are kept in the upper byte */
-						code.word = g_send_buffer[g_send_buffer_pos++];
+						code.word = g_send_buffer[g_send_buffer_pos];
 						if (code.bytes.lsb == 1)
 						{
 							/* This is a wait, and the mod is a delay count */
 							g_send_wait = code.bytes.msb;
+							g_send_buffer_pos++;
 						} else {
-							g_autokey_modifier = code.bytes.msb;
-							g_autokey_buffer = code.bytes.lsb;
-							if (g_autokey_buffer)
-								enqueue_key(g_autokey_buffer);
+							/* Make sure modifier changes precede alphanumerics */
+							if (g_autokey_modifier != code.bytes.msb)
+							{
+								g_autokey_modifier = code.bytes.msb;
+								g_modifier_service = 1;
+							}
+							else
+							{
+								g_autokey_buffer = code.bytes.lsb;
+								if ((g_autokey_buffer != 0) && (g_autokey_buffer < 0x80))
+								{
+									enqueue_key(g_autokey_buffer);
+								}
+								else if ((g_autokey_buffer >= SCANCODE_NEXT_TRACK) && (g_autokey_buffer <= SCANCODE_FAVES))
+								{
+									set_media(g_autokey_buffer);
+								}
+								else if ((g_autokey_buffer >= SCANCODE_POWER) && (g_autokey_buffer <= SCANCODE_WAKE))
+								{
+									set_power(g_autokey_buffer);
+								}
+								g_send_buffer_pos++;
+							}
 						}
 					}
 				} else {
-					if (g_autokey_buffer)
+					if (g_autokey_buffer < 0x80)
+					{
 						delete_key(g_autokey_buffer);
+					}
+					else if ((g_autokey_buffer >= SCANCODE_NEXT_TRACK) && (g_autokey_buffer <= SCANCODE_FAVES))
+					{
+						unset_media(g_autokey_buffer);
+					}
+					else if ((g_autokey_buffer >= SCANCODE_POWER) && (g_autokey_buffer <= SCANCODE_WAKE))
+					{
+						unset_power(g_autokey_buffer);
+					}
 					g_autokey_buffer = 0;
 				}
 			} else {
@@ -92,15 +122,11 @@ void autokey_send(void)
 		}
 	} else {
 		/* Wait for the final keystroke to get sent */
-		if (!g_keyboard_service)
+		if (!keyboard_service)
 		{
-			g_autokey_modifier = 0;
 			g_autokey_status = AUTOKEY_ENDSEND;
 		}
 	}
-	/* We have seen that the USB has taken a report */
-	if (!g_keyboard_service)
-		g_keyboard_service = 1;
 }
 
 void autokey_read(void)
@@ -138,26 +164,36 @@ void autokey_read(void)
 
 void autokey_setidle(void)
 {
+	g_autokey_modifier = 0;
+	g_modifier_service = 1;
 	if (g_report_buffer[0] == 0)
 		g_autokey_status = AUTOKEY_IDLE;
 }
 
 void autokey_cycle(void)
 {
-	if (g_autokey_status & AUTOKEY_SENDING)
+	if (g_autokey_status == AUTOKEY_IDLE)
+		return;
+
+	else if (g_autokey_status & AUTOKEY_SENDING)
 		autokey_send();
+
 	else if (g_macro_waiting != (uint16_t*)0)
 		queue_macro(g_macro_waiting);
+
 #ifdef MACRO_RAM_SIZE
 	else if (g_ram_macro_waiting != (uint16_t*)0)
 		queue_ram_macro(g_ram_macro_waiting, g_ram_macro_ptr);
 #endif /* MACRO_RAM_SIZE */
+
 #ifndef SIMPLE_DEVICE
 	else if (g_autotext_waiting != (char*)0)
 		queue_autotext(g_autotext_waiting);
 #endif /* SIMPLE_DEVICE */
+
 	else if (g_autokey_status & AUTOKEY_READING)
 		autokey_read();
+
 	else
 		autokey_setidle();
 }
@@ -423,3 +459,136 @@ uint16_t char_to_sc(char const c)
 {
 	return pgm_read_word(&asciitable[(uint8_t)c]);
 }
+
+#if 0
+typedef struct {
+	const char unshifted;
+	const char shifted;
+} ascii_t;
+
+static const ascii_t PROGMEM antiasciitable[] = {
+	/* HID_KEYBOARD_SC_A                                 */	{'a', 'A'},
+	/* HID_KEYBOARD_SC_B                                 */	{'b', 'B'},
+	/* HID_KEYBOARD_SC_C                                 */	{'c', 'C'},
+	/* HID_KEYBOARD_SC_D                                 */	{'d', 'D'},
+	/* HID_KEYBOARD_SC_E                                 */	{'e', 'E'},
+	/* HID_KEYBOARD_SC_F                                 */	{'f', 'F'},
+	/* HID_KEYBOARD_SC_G                                 */	{'g', 'G'},
+	/* HID_KEYBOARD_SC_H                                 */	{'h', 'H'},
+	/* HID_KEYBOARD_SC_I                                 */	{'i', 'I'},
+	/* HID_KEYBOARD_SC_J                                 */	{'j', 'J'},
+	/* HID_KEYBOARD_SC_K                                 */	{'k', 'K'},
+	/* HID_KEYBOARD_SC_L                                 */	{'l', 'L'},
+	/* HID_KEYBOARD_SC_M                                 */	{'m', 'M'},
+	/* HID_KEYBOARD_SC_N                                 */	{'n', 'N'},
+	/* HID_KEYBOARD_SC_O                                 */	{'o', 'O'},
+	/* HID_KEYBOARD_SC_P                                 */	{'p', 'P'},
+	/* HID_KEYBOARD_SC_Q                                 */	{'q', 'Q'},
+	/* HID_KEYBOARD_SC_R                                 */	{'r', 'R'},
+	/* HID_KEYBOARD_SC_S                                 */	{'s', 'S'},
+	/* HID_KEYBOARD_SC_T                                 */	{'t', 'T'},
+	/* HID_KEYBOARD_SC_U                                 */	{'u', 'U'},
+	/* HID_KEYBOARD_SC_V                                 */	{'v', 'V'},
+	/* HID_KEYBOARD_SC_W                                 */	{'w', 'W'},
+	/* HID_KEYBOARD_SC_X                                 */	{'x', 'X'},
+	/* HID_KEYBOARD_SC_Y                                 */	{'y', 'Y'},
+	/* HID_KEYBOARD_SC_Z                                 */	{'z', 'Z'},
+	/* HID_KEYBOARD_SC_1_AND_EXCLAMATION                 */	{'1', '!'},
+	/* HID_KEYBOARD_SC_2_AND_AT                          */	{'2', '@'},
+	/* HID_KEYBOARD_SC_3_AND_HASHMARK                    */	{'3', '#'},
+	/* HID_KEYBOARD_SC_4_AND_DOLLAR                      */	{'4', '$'},
+	/* HID_KEYBOARD_SC_5_AND_PERCENTAGE                  */	{'5', '%'},
+	/* HID_KEYBOARD_SC_6_AND_CARET                       */	{'6', '^'},
+	/* HID_KEYBOARD_SC_7_AND_AMPERSAND                   */	{'7', '&'},
+	/* HID_KEYBOARD_SC_8_AND_ASTERISK                    */	{'8', '*'},
+	/* HID_KEYBOARD_SC_9_AND_OPENING_PARENTHESIS         */	{'9', '('},
+	/* HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS         */	{'0', ')'},
+	/* HID_KEYBOARD_SC_ENTER                             */	{0, 0},
+	/* HID_KEYBOARD_SC_ESCAPE                            */	{0, 0},
+	/* HID_KEYBOARD_SC_BACKSPACE                         */	{0, 0},
+	/* HID_KEYBOARD_SC_TAB                               */	{0, 0},
+	/* HID_KEYBOARD_SC_SPACE                             */	{' ', ' '},
+	/* HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE              */	{'-', '_'},
+	/* HID_KEYBOARD_SC_EQUAL_AND_PLUS                    */	{'=', '+'},
+	/* HID_KEYBOARD_SC_OPENING_BRACKET_AND_OPENING_BRACE */	{'[', '{'},
+	/* HID_KEYBOARD_SC_CLOSING_BRACKET_AND_CLOSING_BRACE */	{']', '}'},
+	/* HID_KEYBOARD_SC_BACKSLASH_AND_PIPE                */	{'\\', '|'},
+	/* HID_KEYBOARD_SC_NON_US_HASHMARK_AND_TILDE         */	{'#', '~'},
+	/* HID_KEYBOARD_SC_SEMICOLON_AND_COLON               */	{';', ':'},
+	/* HID_KEYBOARD_SC_APOSTROPHE_AND_QUOTE              */	{'\'', '"'},
+	/* HID_KEYBOARD_SC_GRAVE_ACCENT_AND_TILDE            */	{'`', '~'},
+	/* HID_KEYBOARD_SC_COMMA_AND_LESS_THAN_SIGN          */	{',', '<'},
+	/* HID_KEYBOARD_SC_DOT_AND_GREATER_THAN_SIGN         */	{'.', '>'},
+	/* HID_KEYBOARD_SC_SLASH_AND_QUESTION_MARK           */	{'/', '?'},
+	/* HID_KEYBOARD_SC_CAPS_LOCK                         */	{0, 0},
+	/* HID_KEYBOARD_SC_F1                                */	{0, 0},
+	/* HID_KEYBOARD_SC_F2                                */	{0, 0},
+	/* HID_KEYBOARD_SC_F3                                */	{0, 0},
+	/* HID_KEYBOARD_SC_F4                                */	{0, 0},
+	/* HID_KEYBOARD_SC_F5                                */	{0, 0},
+	/* HID_KEYBOARD_SC_F6                                */	{0, 0},
+	/* HID_KEYBOARD_SC_F7                                */	{0, 0},
+	/* HID_KEYBOARD_SC_F8                                */	{0, 0},
+	/* HID_KEYBOARD_SC_F9                                */	{0, 0},
+	/* HID_KEYBOARD_SC_F10                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F11                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F12                               */	{0, 0},
+	/* HID_KEYBOARD_SC_PRINT_SCREEN                      */	{0, 0},
+	/* HID_KEYBOARD_SC_SCROLL_LOCK                       */	{0, 0},
+	/* HID_KEYBOARD_SC_PAUSE                             */	{0, 0},
+	/* HID_KEYBOARD_SC_INSERT                            */	{0, 0},
+	/* HID_KEYBOARD_SC_HOME                              */	{0, 0},
+	/* HID_KEYBOARD_SC_PAGE_UP                           */	{0, 0},
+	/* HID_KEYBOARD_SC_DELETE                            */	{0, 0},
+	/* HID_KEYBOARD_SC_END                               */	{0, 0},
+	/* HID_KEYBOARD_SC_PAGE_DOWN                         */	{0, 0},
+	/* HID_KEYBOARD_SC_RIGHT_ARROW                       */	{0, 0},
+	/* HID_KEYBOARD_SC_LEFT_ARROW                        */	{0, 0},
+	/* HID_KEYBOARD_SC_DOWN_ARROW                        */	{0, 0},
+	/* HID_KEYBOARD_SC_UP_ARROW                          */	{0, 0},
+	/* HID_KEYBOARD_SC_NUM_LOCK                          */	{0, 0},
+	/* HID_KEYBOARD_SC_KEYPAD_SLASH                      */	{'/', '/'},
+	/* HID_KEYBOARD_SC_KEYPAD_ASTERISK                   */	{'*', '*'},
+	/* HID_KEYBOARD_SC_KEYPAD_MINUS                      */	{'-', '-'},
+	/* HID_KEYBOARD_SC_KEYPAD_PLUS                       */	{'+', '+'},
+	/* HID_KEYBOARD_SC_KEYPAD_ENTER                      */	{0, 0},
+	/* HID_KEYBOARD_SC_KEYPAD_1_AND_END                  */	{'1', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_2_AND_DOWN_ARROW           */	{'2', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_3_AND_PAGE_DOWN            */	{'3', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_4_AND_LEFT_ARROW           */	{'4', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_5                          */	{'5', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_6_AND_RIGHT_ARROW          */	{'6', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_7_AND_HOME                 */	{'7', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_8_AND_UP_ARROW             */	{'8', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_9_AND_PAGE_UP              */	{'9', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_0_AND_INSERT               */	{'0', 0},
+	/* HID_KEYBOARD_SC_KEYPAD_DOT_AND_DELETE             */	{'.', 0},
+	/* HID_KEYBOARD_SC_NON_US_BACKSLASH_AND_PIPE         */	{'\\', '|'},
+	/* HID_KEYBOARD_SC_APPLICATION                       */	{0, 0},
+	/* HID_KEYBOARD_SC_POWER                             */	{0, 0},
+	/* HID_KEYBOARD_SC_KEYPAD_EQUAL_SIGN                 */	{0, 0},
+	/* HID_KEYBOARD_SC_F13                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F14                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F15                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F16                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F17                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F18                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F19                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F20                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F21                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F22                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F23                               */	{0, 0},
+	/* HID_KEYBOARD_SC_F24                               */	{0, 0}
+};
+
+char sc_to_char(uint16_t const sc)
+{
+	const uint8_t mod = ((union16_t)sc).bytes.msb;
+	const uint8_t code = ((union16_t)sc).bytes.lsb - HID_KEYBOARD_SC_A;
+	
+	if ((mod & 0x22) == 0)
+		return pgm_read_byte(&antiasciitable[code].unshifted);
+	else
+		return pgm_read_byte(&antiasciitable[code].shifted);
+}
+#endif

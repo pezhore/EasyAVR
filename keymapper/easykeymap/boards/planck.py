@@ -26,9 +26,6 @@ cfg_name = "planck"
 teensy = False
 hw_boot_key = False
 
-display_height = int(4*4)
-display_width = int(12*4)
-
 num_rows = 4
 num_cols = 12
 
@@ -135,7 +132,7 @@ keyboard_definition = [
      ((4, 4), (3, 1), 'HID_KEYBOARD_SC_LEFT_GUI'),
      ((4, 4), (3, 2), 'HID_KEYBOARD_SC_LEFT_ALT'),
      ((4, 4), (3, 3), 'HID_KEYBOARD_SC_RIGHT_SHIFT'),
-     ((4, 4), (3, 4), 'SCANCODE_FN'),
+     ((4, 4), (3, 4), 'SCANCODE_FN1'),
      ((4, 4), (3, 5), 'HID_KEYBOARD_SC_SPACE'),
      ((4, 4), (3, 6), 'HID_KEYBOARD_SC_SPACE'),
      ((4, 4), (3, 7), 'SCANCODE_FN2'),
@@ -144,5 +141,3 @@ keyboard_definition = [
      ((4, 4), (3, 10), 'HID_KEYBOARD_SC_UP_ARROW'),
      ((4, 4), (3, 11), 'HID_KEYBOARD_SC_RIGHT_ARROW')]
 ]
-
-alt_layouts = {}

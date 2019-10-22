@@ -26,9 +26,6 @@ cfg_name = "sigma"
 teensy = False
 hw_boot_key = False
 
-display_height = int(6.5*4)
-display_width = int(18.25*4)
-
 num_rows = 6
 num_cols = 17
 
@@ -87,7 +84,7 @@ led_definition = [
     ('L Win Key', 'Win Lock'),
     ('R Win Key', 'Backlight'),
     ('App Key', 'Backlight'),
-    ('Fn Key', 'Fn Active')
+    ('Fn Key', 'Fn1 Active')
 ]
 
 led_hardware = [
@@ -217,7 +214,7 @@ keyboard_definition = [
      ((4, 4), (4, 10), 'HID_KEYBOARD_SC_DOT_AND_GREATER_THAN_SIGN'),
      ((4, 4), (4, 11), 'HID_KEYBOARD_SC_SLASH_AND_QUESTION_MARK'),
      ((7, 4), (4, 12), 'HID_KEYBOARD_SC_RIGHT_SHIFT'),
-     ((4, 4), (4, 13), 'SCANCODE_FN'),
+     ((4, 4), (4, 13), 'SCANCODE_FN1'),
      (1, None, '0'),
      ((4, 4), (4, 14), '0'),
      ((4, 4), (4, 15), 'HID_KEYBOARD_SC_UP_ARROW'),
@@ -236,5 +233,3 @@ keyboard_definition = [
      ((4, 4), (5, 15), 'HID_KEYBOARD_SC_DOWN_ARROW'),
      ((4, 4), (5, 16), 'HID_KEYBOARD_SC_RIGHT_ARROW')]
 ]
-
-alt_layouts = {}

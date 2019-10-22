@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
 #
 # Easy AVR USB Keyboard Firmware
 # Copyright (C) 2013-2016 David Howland
@@ -19,8 +20,6 @@
 """Compile all hardware configurations and incorporate the binaries into
 the keymapper application.
 """
-
-from __future__ import print_function
 
 import os
 import os.path
@@ -45,6 +44,7 @@ log_path = os.path.join(proj_dir, "log.txt")
 componentinfo_path = os.path.join(proj_dir, "autobuild.componentinfo.xml")
 
 hardware_table = [
+    ("ATmega32U4", "16000000UL", "BOARD_SIZE_SQUARE"),
     ("ATmega32U4", "16000000UL", "BOARD_SIZE_COSTAR"),
     ("ATmega32U4", "16000000UL", "BOARD_SIZE_TKL"),
     ("ATmega32U4", "16000000UL", "BOARD_SIZE_SIXTY"),
@@ -72,6 +72,13 @@ RAM_table = {
     "AT90USB1286": 8192,
 }
 
+BOOT_table = {
+    "ATmega32U4": 0x7000,
+    "ATmega32U2": 0x7000,
+    "ATmega16U2": 0x3000,
+    "AT90USB1286": 0x1E000,
+}
+
 MIN_RAM_FOR_STACK = 128
 
 def write_symbol(outfile, symtable, symbol):
@@ -82,6 +89,7 @@ def write_symbol(outfile, symtable, symbol):
 
 for hw in hardware_table:
 
+    simple_device = (hw[0] == 'ATmega16U2') or (hw[2] == 'BOARD_SIZE_CARD')
     hardware_specs = (hw[0], hw[1].replace('000000UL','') + 'MHz', hw[2].replace('BOARD_SIZE_',''))
     hardware_name = "%s_%s_%s.hex" % hardware_specs
     print('\n'+hardware_name)
@@ -134,6 +142,15 @@ for hw in hardware_table:
         print("WARNING: Insufficient space for the stack! (bytes free: %d, required: %d)" % (unused,MIN_RAM_FOR_STACK))
         sys.exit(1)
 
+    print("Checking Flash usage")
+    used = sections['.text']+sections['.data']
+    boot = BOOT_table[hw[0]]
+    pct_full = (used/boot) * 100
+    print("Used %d bytes of %d (%0.1f %% full)" % (used, boot, pct_full))
+    if used >= boot:
+        print("WARNING: Insufficient space for the bootloader! (bytes over: %d)" % (used-boot))
+        sys.exit(1)
+
     print("Updating config source")
     template_name = "%s_%s_%s.py" % hardware_specs
     with open(os.path.join(templates_dir, template_name), 'w') as outfile:
@@ -146,7 +163,9 @@ for hw in hardware_table:
         outfile.write(hardware_specs[1])
         outfile.write("'\nsize = '")
         outfile.write(hardware_specs[2])
-        outfile.write("'\n\nlayers_map = ")
+        outfile.write("'\nsimple = ")
+        outfile.write(str(simple_device))
+        outfile.write("\n\nlayers_map = ")
         write_symbol(outfile, symbols, 'LAYERS')
         outfile.write("\nactions_map = ")
         write_symbol(outfile, symbols, 'ACTIONS')
@@ -186,10 +205,12 @@ for hw in hardware_table:
         write_symbol(outfile, symbols, 'MATRIX_SENSE_LIST')
         outfile.write("\nkmac_key_map = ")
         write_symbol(outfile, symbols, 'KMAC_KEY')
-        outfile.write("\npw_defs_map = ")
-        write_symbol(outfile, symbols, 'PWDEFS')
         outfile.write("\nboot_ptr_map = ")
         write_symbol(outfile, symbols, 'BOOTLOADER')
         outfile.write("\nprod_str_map = ")
         write_symbol(outfile, symbols, 'ProductString')
+        outfile.write("\nendpoint_opt_map = ")
+        write_symbol(outfile, symbols, 'EndpointOptions')
+        outfile.write("\nconf_desc_map = ")
+        write_symbol(outfile, symbols, 'ConfigurationDescriptor')
         outfile.write("\n")
